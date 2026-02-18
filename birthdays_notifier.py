@@ -1,5 +1,6 @@
 import os
 import json
+import base64
 import requests
 import pandas as pd
 import gspread
