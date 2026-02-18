@@ -1,4 +1,4 @@
-name: Build and Upload Lambda
+name: Lambda CI/CD
 
 on:
   push:
@@ -6,8 +6,12 @@ on:
       - main
 
 jobs:
-  build-and-upload:
+  build:
+    name: Build Lambda
     runs-on: ubuntu-latest
+
+    outputs:
+      artifact-name: lambda-package
 
     steps:
       - name: Checkout
@@ -29,6 +33,23 @@ jobs:
           cd build
           zip -r lambda.zip .
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-package
+          path: build/lambda.zip
+
+  deploy:
+    name: Deploy to S3
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-package
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -38,4 +59,4 @@ jobs:
 
       - name: Upload to S3
         run: |
-          aws s3 cp build/lambda.zip s3://${{ secrets.S3_BUCKET }}/${{ secrets.S3_KEY }}
+          aws s3 cp lambda.zip s3://${{ secrets.S3_BUCKET }}/${{ secrets.S3_KEY }}
